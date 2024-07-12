@@ -1,0 +1,66 @@
+services:
+  # the postgres db is used for storing variant information and various runtime info of the app
+  postgres:
+    image: postgres:alpine
+    environment:
+      POSTGRES_DB: snpdb
+      POSTGRES_PASSWORD: snpdb
+      POSTGRES_USER: snpdb
+    networks:
+      - variantgrid-network-dev
+    ports:
+      - "5432:5432"
+    expose:
+      - 5432
+    volumes:
+      - variantgrid-postgres-dev:/var/lib/postgresql/data
+
+  redis:
+    image: redis:latest
+    command: redis-server
+    networks:
+      - variantgrid-network-dev
+    volumes:
+      - redis-dev:/var/lib/redis
+      - redis-config:/usr/local/etc/redis/redis.conf
+    ports:
+      - "6379:6379"
+    expose:
+      - 6379
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    networks:
+      - variantgrid-network-dev
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+      - HTTP_USER=root
+      - HTTP_PASSWORD=qwerty
+    ports:
+      - "8081:8081"
+    expose:
+      - 8081
+    depends_on:
+      - redis
+
+  rabbitmq:
+    image: rabbitmq:latest
+    networks:
+      - variantgrid-network-dev
+    ports:
+      - "5672:5672"
+    expose:
+      - 5672
+
+volumes:
+  redis-dev:
+  redis-config:
+  variantgrid-postgres-dev:
+
+networks:
+  variantgrid-network-dev:
+    driver: bridge
+
+  none-network:
+    driver: none
+
